@@ -1,0 +1,38 @@
+﻿
+
+<div class="transactionInput">
+    <div class="container">
+        <div class="col-xs-12 col-sm-7">
+            <div class="row">
+                <h3>Transaction Input</h3>
+               
+                <!-- Parse transactions -->
+                <div class="well inactive col-xs-12" (click)="setActive(vm.Phases.STEP1)">
+                    <h4>Parse transactions</h4>
+                    <div>
+                        <form [control-group]="rawTextForm">
+                            <textarea [control]="rawText" name="todo" type="text" (keyup) style="width: 100%; height: 200px"></textarea>
+                            <button class="btn btn-primary" type="button" (click)="parseRawText(rawText.value);" >Preview</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Add transactions -->
+                <div class="well inactive col-xs-12" (click)="setActive(vm.Phases.STEP2)">
+                    <h4>Add transactions</h4>
+                     <register [gridid]=phase2GridInfo.id [title]=phase2GridInfo.title [data]=transactions [columns]=phase2GridInfo.columns></register>
+                    <button class="btn btn-primary" (click)="addTransactions(); $event.stopPropagation()">Add all</button>
+                </div>
+
+                <!-- Add tags-->
+                <div class="well inactive col-xs-12" (click)="setActive(vm.Phases.STEP3)">
+                    <h4>Add tags</h4>
+                    <div>
+                         <register [gridid]=phase3GridInfo.id [title]=phase3GridInfo.title [data]=eventTagLists [columns]=phase3GridInfo.columns></register>
+                        <button class="btn btn-primary" (click)="addTags(); $event.stopPropagation()">Add all</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

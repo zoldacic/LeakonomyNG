@@ -1,0 +1,42 @@
+﻿<link href="/graphDisplay/graphDisplay.css" rel="stylesheet" />
+
+<div class="graphDisplay">
+    <div class="container">
+        <div class="col-xs-12">
+            <div class="row">
+
+                <h3>Graphs</h3>
+                <div class="well">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <select class="form-control">
+                                <option *ng-for="#graph of graphs" >{{graph.nameAndDate}}</option>                               
+                            </select>
+                        </div>
+                        <div class="col-sm-6" style="padding-left: 0px">
+                            <button class="btn btn-primary btn-addGraph" (click)="selectGraph(selectedGraph)">Add graph</button>
+                        </div>
+                    </div>
+
+                    <div class="row"> <!--*for="#chart of charts"-->
+                        <div class="col-xs-6 col-sm-6 chartContainer" >
+                            <div class="col-xs-6">
+                                <select class="form-control">
+                                    <option *ng-for="var graphType of graphTypes">{{graphType.name}}</option>
+                                </select>
+                            </div>
+                            <div class="col-xs-6">
+                                <button class="btn btn-primary" ng-click="vm.removeChart($index)">Remove chart</button>
+                            </div>
+                            <div class="col-xs-12">
+                                <!--<chart class="chart" chart-data="chart"></chart>-->
+                                -- Charts -- <charts [charts]="charts"></charts>
+                                <!---- AreaChart -- <area-chart [data]="chartData"></area-chart> -- / AreaChart ----> 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,11 @@
+﻿
+    <table>
+        <thead>
+            <tr><td *for="#column of columns">{{column}}</td></tr>
+        </thead>
+        <tr *for="#item of items">
+            <td *for="#column of columns">{{item[column]}}</td>
+        </tr>
+    </table>
+   
+
