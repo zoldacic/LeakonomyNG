@@ -72,7 +72,7 @@ export class Register {
         that.columns.forEach(c => dataTableColumns.push({ "title": c.text[0].toUpperCase() + c.text.slice(1), "width": c.width }));
         
         // Chrome specific
-        let element = $('#' + that.gridid) ? $('body /deep/ #' + that.gridid) : $('#' + that.gridid);
+        let element = $('#' + that.gridid).length == 0 ? $('body /deep/ #' + that.gridid) : $('#' + that.gridid);
         element.DataTable({
             "data": dataSet,
             "columns": dataTableColumns,

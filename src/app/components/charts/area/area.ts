@@ -15,20 +15,21 @@ let template = require('./area.html');
     //}
 })
 @View({
-        template: `${template}`
+        template: `${template}`        
 })
 export class AreaChart extends Chart {
+    
     constructor() {
         //let data = [new AreaChartItem(new Date(2015, 1, 1), 200.5), new AreaChartItem(new Date(2015, 1, 15), 150.7)];
         //this.createChart(data);
 
         super();
-    }
+    }    
 
-    createChart(data: Array<ChartItem>) {
+    create(data: Array<ChartItem>) {
         let margin  = { top: 20, right: 20, bottom: 30, left: 50 };
-        let width   = 960 - margin.left - margin.right;
-        let height  = 500 - margin.top - margin.bottom;
+        let width   = 400 - margin.left - margin.right;
+        let height  = 300 - margin.top - margin.bottom;
 
         //let parseDate = d3.time.format("%d-%b-%y").parse;
 
@@ -48,7 +49,7 @@ export class AreaChart extends Chart {
             .y0(height)
             .y1((d) => { return y(d.close); });
 
-        let element = d3.select(".chart") ? d3.select("body /deep/ .chart") : d3.select(".chart");
+        let element = d3.select("#" + this.id)[0][0] != null ? d3.select("#" + this.id) : d3.select("body /deep/ #" + this.id);
         let svg = element.append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
@@ -57,7 +58,6 @@ export class AreaChart extends Chart {
 
         //d3.tsv("data.tsv", (error, data) => {
        
-
             data.forEach((d) => {
                 d.date = d.date; //parseDate(d.date);
                 d.close = +d.close;
@@ -86,5 +86,10 @@ export class AreaChart extends Chart {
                 .style("text-anchor", "end")
                 .text("Sum (kr)");
        // });
+    }
+    
+    destroy() {
+        let element = d3.select("#" + this.id)[0][0] != null ? d3.select("#" + this.id) : d3.select("body /deep/ #" + this.id);
+        element.remove();
     }
 }

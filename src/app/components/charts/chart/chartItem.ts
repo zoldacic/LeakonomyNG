@@ -1,9 +1,11 @@
 ﻿export class ChartItem {
-    date: Date;
-    close: number;
+    //date: Date;
+    //close: number;
+    x;
+    y: number;
 
-    constructor(date: Date, close: number) {
-        this.date = date;
-        this.close = close;
+    constructor(x, y: number) {
+        this.x = x;
+        this.y = y;
     }
 }

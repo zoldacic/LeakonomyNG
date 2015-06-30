@@ -44,7 +44,7 @@ export class TransactionParser {
     phase2GridInfo: GridInfo;
     phase3GridInfo: GridInfo;
 
-    constructor(resourceHandler: ResourceHandler,     public formBuilder: FormBuilder) {
+    constructor(resourceHandler: ResourceHandler, public formBuilder: FormBuilder) {
         this.resourceHandler = resourceHandler;
         
         this.rawTextForm = formBuilder.group({'rawText': ['']});
@@ -140,7 +140,7 @@ export class TransactionParser {
                 this.tagsRef.child(eventTagList.key).remove();
             }
 
-            var eventTags = _.map(eventTagList.tags.split(','), (eventTag) => { return eventTag.trim() });
+            var eventTags = _.map(eventTagList.tags.split(','), (eventTag:string) => { return eventTag.trim() });
             eventTags = _.filter(eventTags, (eventTag) => { return eventTag && eventTag.length > 0 });
 
             if (eventTags && eventTags.length > 0) {

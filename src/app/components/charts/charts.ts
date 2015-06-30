@@ -4,28 +4,37 @@
 
 import {Component, View, Directive, coreDirectives} from 'angular2/angular2';
 import {Chart} from './chart/chart'
-import {AreaChart} from './area/area'
+import {ChartService} from '../../services/chartService'
+import {AreaChart} from './area/areaNVD3'
 
 let template =  require('./charts.html');
+let style = require('../../../../public/css/nv.d3.css');
 
 @Component({
     selector: 'charts',
+    appInjector: [ChartService],
     properties: {
-        'charts': 'charts'
+   //     'charts': 'charts'
     }
 })
 @View({
-    template: `${template}`,
+        template: `
+        <style>${style}</style>
+        ${template}`,
     directives: [coreDirectives, AreaChart]
 }) 
 export class Charts {
-    //charts: Array<Chart>;
-
+    chartService: ChartService;
     constructor() {
-      //  this.charts = new Array<Chart>();
+        // This is needed for the 'ng-for'-binding in the view
+        this.chartService = ChartService.getInstance();
     }
 
-    //add(chart: IChart) {
-    //    this.charts.push(chart);
-    //}
+    close(chartId) {
+        let chart = ChartService.getInstance().charts.filter(c => { return c.id == chartId; })[0];
+        let index = ChartService.getInstance().charts.indexOf(chart, 0);
+         
+        chart.destroy();         
+        ChartService.getInstance().charts.splice(index, 1);
+    }
 }

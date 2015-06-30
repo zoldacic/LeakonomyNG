@@ -1,42 +1,100 @@
-﻿<link href="/graphDisplay/graphDisplay.css" rel="stylesheet" />
-
-<div class="graphDisplay">
+﻿<div>
     <div class="container">
-        <div class="col-xs-12">
-            <div class="row">
 
-                <h3>Graphs</h3>
-                <div class="well">
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <select class="form-control">
-                                <option *ng-for="#graph of graphs" >{{graph.nameAndDate}}</option>                               
-                            </select>
-                        </div>
-                        <div class="col-sm-6" style="padding-left: 0px">
-                            <button class="btn btn-primary btn-addGraph" (click)="selectGraph(selectedGraph)">Add graph</button>
-                        </div>
-                    </div>
-
-                    <div class="row"> <!--*for="#chart of charts"-->
-                        <div class="col-xs-6 col-sm-6 chartContainer" >
+                <h3>Charts</h3>
+                <div class="well clearfix">
+                    <form [control-group]="chartForm">
+                        <div class="row col-xs-12">
                             <div class="col-xs-6">
-                                <select class="form-control">
-                                    <option *ng-for="var graphType of graphTypes">{{graphType.name}}</option>
+                                <label>Chart</label>
+                                <select id="chartSelectionInput" class="form-control" (change)="updateChartFields()">
+                                    <option *ng-for="#graph of graphs" [value]="graph.key">{{graph.displayName}}</option>                               
                                 </select>
+                                <!--<button class="btn btn-primary" (click)="updateChartFields()">Update fields</button>-->
                             </div>
-                            <div class="col-xs-6">
-                                <button class="btn btn-primary" ng-click="vm.removeChart($index)">Remove chart</button>
+                        </div>                  
+                        
+                        <div class="row col-xs-12">
+                            <div class="col-xs-6">                    
+                                <label>Name</label>
+                                <input type="text" class="form-control" name="name" id="name" [control]="nameInput" [value]="graph.name" (change)="updateInput('name', nameInput.value)">
+                            </div>                          
+                        </div>
+                        
+                        <div class="row col-xs-12">
+                            <div class="col-xs-6">                    
+                                <label>Type</label>
+                                <select class="form-control" name="chartType" id="chartType" [control]="chartTypeInput" (change)="updateInput('chartType', chartTypeInput.value)">
+                                    <option *ng-for="#chartType of chartTypes" [value]="chartType" [selected]="graph.type == chartType">{{chartType}}</option>
+                                </select>
+                            </div>                          
+                        </div>
+                        
+                       <div class="row col-xs-12">
+                            <div class="col-xs-6">                    
+                                <label>No of datasets</label>
+                                <select class="form-control" name="noOfDataSets" id="noOfDataSets" [control]="noOfDataSetsInput" (change)="updateInput('noOfDataSets', noOfDataSetsInput.value)">
+                                    <option *ng-for="#dataSetNo of noOfDataSets" [value]="noOfDataSets" [selected]="graph.datasets.length == dataSetNo">{{dataSetNo}}</option>
+                                </select>
+                            </div>                          
+                        </div>                        
+                        
+                        <div class="row col-xs-12">
+                            <div class="col-xs-6">                    
+                                <label>Datasets</label>
+                                <div class="col-xs-12" *ng-for="#dataset of datasets">                                    
+                                    <div class="col-xs-6">Tags: <input type="text" class="form-control" [id]="'datasettags' + dataset.id" [value]="dataset.value" (change)="updateInput('datasettags' + dataset.id, '')"></div>
+                                    <div class="col-xs-6">Color: <input type="text" class="form-control" [id]="'datasetcolor' + dataset.id" [value]="dataset.color" (change)="updateInput('datasetcolor' + dataset.id, '')"></div>                                       
+                                </div>
+                                
+                            </div>                          
+                        </div>                        
+                        
+                        
+                        <!--<div class="row col-xs-12">
+                            <div class="col-xs-6">                    
+                                <label>Datasets</label>
+                                <register [gridid]=dataSetGridInfo.id [title]=dataSetGridInfo.title [data]= [columns]=dataSetGridInfo.columns></register>                                
+                            </div>                          
+                        </div>                                                -->
+                        
+                        <div class="row col-xs-12">
+                            <div class="col-xs-12"> 
+                                <label>Date</label>
                             </div>
-                            <div class="col-xs-12">
-                                <!--<chart class="chart" chart-data="chart"></chart>-->
-                                -- Charts -- <charts [charts]="charts"></charts>
-                                <!---- AreaChart -- <area-chart [data]="chartData"></area-chart> -- / AreaChart ----> 
+                            
+                            <div class="col-xs-6 col-sm-3">
+                                <input type="date" class="form-control" [control]="dateFromInput" [value]="graph.dateFrom" name="dateFrom" id="dateFrom" (change)="updateInput('dateFrom', dateFromInput.value)">
+                            </div>
+                            
+                            <div class="col-xs-6 col-sm-3">
+                                <input type="date" class="form-control" [control]="dateToInput" [value]="graph.dateTo" name="dateTo" id="dateTo" (change)="updateInput('dateTo', dateToInput.value)">
                             </div>
                         </div>
+                        
+                        <div class="row col-xs-12">
+                            <div class="col-xs-6">                    
+                                <label>Interval Type</label>
+                                <select class="form-control" name="timeInterval" id="timeInterval" [control]="timeIntervalInput" (change)="updateInput('timeInterval', timeIntervalInput.value)">
+                                    <option *ng-for="#timeInterval of timeIntervals" [selected]="graph.timeInterval == timeInterval">{{timeInterval}}</option>
+                                </select>
+                            </div>                          
+                        </div>
+                    </form>     
+                        
+                    <div class="col-xs-6">
+                        <button class="btn btn-primary" (click)="showGraph()">Show</button>
+                        <button class="btn btn-primary" (click)="saveGraph()">Save</button>
+                        <button class="btn btn-primary" disabled (click)="saveAsNewGraph()">Save as New</button>
+                        <!--<button class="btn btn-primary" ng-click="vm.removeChart($index)">Remove chart</button>-->
+                    </div>   
+                                          
+                    <div class="col-xs-12" >
+                        <!--<chart class="chart" chart-data="chart"></chart>-->
+                        <charts></charts>
+                          <!--[charts]="charts"-->
+                        <!---- AreaChart -- <area-chart [data]="chartData"></area-chart> -- / AreaChart ----> 
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>

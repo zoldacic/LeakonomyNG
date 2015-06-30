@@ -1,3 +1,32 @@
-﻿<div class="chart" *ng-for="var areaChart of charts">
-    <!--<area-chart *ng-for="var areaChart of charts"></area-chart>-->
+﻿
+<style>
+    /*body {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #444;
+        shape-rendering: crispEdges;
+    }
+
+    .area {
+        fill: steelblue;
+    }*/
+</style>
+
+<style>
+    .chart svg {
+        height: 400px;
+    }
+</style>    
+    
+
+<div *ng-for="#chart of chartService.charts" >
+    <button class="btn btn-primary" (click)="close(chart.id)">X</button>
+    <div class="chart" [id]="chart.id">
+        <!-- Needed for NVD3 -->
+        <svg></svg>
+    </div>
 </div>

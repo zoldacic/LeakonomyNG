@@ -1,17 +1,17 @@
 ﻿/// <reference path="../../../../typings/tsd.d.ts" />
 /// <reference path="../../../custom_typings/ng2.d.ts" />
 /// <reference path="../../../../typings/underscore/underscore.d.ts" />
+/// <reference path="../../../../typings/jquery/jquery.d.ts" />
 
 import {Component, View, Directive, coreDirectives, For} from 'angular2/angular2';
+import {formDirectives, FormBuilder, Control, ControlGroup} from 'angular2/forms';
 import {ResourceHandler} from '../../services/resourceHandler';
+import {ChartService} from '../../services/chartService'
 import {Charts} from '../charts/charts'
 import {Chart} from '../charts/chart/chart'
 import {ChartItem} from '../charts/chart/chartItem'
-import {AreaChart} from '../charts/area/area'
-
-class TimeInterval {
-    name: string;
-}
+import {AreaChart} from '../charts/area/areaNVD3'
+import {GridInfo, GridInfoColumn} from '../dataTable/gridInfo'
 
 class DataSet {
     tags: Array<string>;
@@ -19,9 +19,19 @@ class DataSet {
 }
 
 class Graph {
+    key: string;
+    name: string;
+    displayName: string;
     datasets: Array<DataSet>;
     tags: Array<Object>;
-    timeInterval: TimeInterval;
+    dateFrom: Date;
+    dateTo: Date;
+    timeInterval: string;
+    type: string;
+    
+    constructor() {
+        this.name = "";         
+    }
 }
 
 class EventTag {
@@ -39,46 +49,151 @@ class Transaction {
 }
 
 let template = require('./graphDisplay.html');
+let style = require('../../../../public/css/bootstrap.min.css');
 
 @Component({
     selector: 'graph-display',
-    appInjector: [ResourceHandler]
+    appInjector: [FormBuilder, ResourceHandler, ChartService]
 })
 @View({
-    template: `${template}`,
+    template: `
+        <style>${style}</style>
+        ${template}`,
     directives: [coreDirectives, Charts]
 })
-export class GraphDisplay {
+export class GraphDisplay {      
     eventTagLists: Array<EventTagList>;
     graph: Graph;
     graphs: Array<Graph>;
     transactions: Array<Transaction>;
-    charts: Array<Chart>;
+    chartTypes: Array<string>;
+    timeIntervals: Array<string>;           
+       
+    chartForm: ControlGroup;
+    nameInput: Control;
+    dateFromInput: Control;
+    dateToInput: Control;
+    chartTypeInput: Control;
+    timeIntervalInput: Control;
+    
+    dataSetGridInfo: GridInfo;
+    dataSetTags: Array<any>;
+    datasets: Array<any>;
 
-    constructor(resourceHandler: ResourceHandler) {
+    constructor(public resourceHandler: ResourceHandler, 
+                public formBuilder: FormBuilder) {
+                    
         let that = this;
         that.graphs = new Array();
-        that.charts = new Array<Chart>();
+        that.chartTypes = new Array<string>('- Select area -', 'Area');
+        that.timeIntervals = new Array<string>('- Select time interval -', 'Yearly', 'Monthly', 'Daily');
+
+        that.chartForm = formBuilder.group({'name': [''], 'dateFrom': [''], 'dateTo': [''], 'chartType': [''], 'timeInterval': ['']});
+        that.nameInput = that.chartForm.controls.name;
+        that.dateFromInput = that.chartForm.controls.dateFrom;
+        that.dateToInput = that.chartForm.controls.dateTo;
+        that.chartTypeInput = that.chartForm.controls.chartType;
+        that.timeIntervalInput = that.chartForm.controls.timeInterval;
+
+        that.dataSetGridInfo = new GridInfo("dataSetGrid", "Datasets", null, new Array<GridInfoColumn>(new GridInfoColumn('tags', '60%'), new GridInfoColumn('dataset1', '10%'), new GridInfoColumn('dataset2', '10%'), new GridInfoColumn('dataset3', '10%'), new GridInfoColumn('dataset4', '10%')));
+
+        that.graph = that._createNewGraphItem();
 
         resourceHandler.list('graphs').
-            then((newGraphs) => { that.addGraphs(that.graphs, newGraphs); }).
+            then((newGraphs:Array<Graph>) => { that._addGraphs(newGraphs); }).
             then(() => { return resourceHandler.list('tags'); }).
-            then((data) => { that.eventTagLists = (<Array<EventTagList>>data); }).
-            then(() => { return resourceHandler.list('transactions'); }).
-            then((data) => { that.transactions = (<Array<Transaction>>data); });
+            then((data) => { that.eventTagLists = (<Array<EventTagList>>data); });
+            
+        // resourceHandler.list('tags').
+        //     then((tags:Array<any>) => {
+        //         tags.forEach(tag => {
+        //             that.dataSetTags.push(new { name: tag.});
+        //         });                
+        //     });                        
+    }
+    
+    _createNewGraphItem() {
+        let graph = new Graph();
+        graph.displayName = "- New graph -";
+        this.graphs.push(graph);
+        return graph;
+    }
+    
+    _addGraphs(newGraphs: Array<Graph> ) {
+        let that = this;
+        newGraphs.forEach((graph) => {
+            that._setDisplayName(graph);
+            that.graphs.push(graph);
+        });
+    };    
+    
+    _setDisplayName(graph: Graph) {
+        graph.displayName = graph.name + ' : ' + graph.dateFrom + ' - ' + graph.dateTo;
+    }
+    
+    _getFieldByClass(id: string) {
+        return this._getFieldById("." + id);
+    }
+    
+    _getFieldById(id: string) {
+        let fieldId = id;
+        
+        if (fieldId.substr(0,1) != "#" && fieldId.substr(0,1) != ".") {
+            fieldId = "#" + fieldId;
+        }
+        
+        let field = $(fieldId).length > 0 ? $(fieldId) : $('body /deep/ ' + fieldId);
+                       
+        if (field.length > 0) {
+            return field;
+        } else {
+            return null;
+        }
+    }
+    
+    updateChartFields() {
+        let element = this._getFieldById('chartSelectionInput')
+        let key = element.val();
+        this.graph = this.graphs.filter((graph: Graph) => { return graph.key == key; })[0];   
+        this.datasets = [];
+        
+        let i = 0;
+        this.graph.datasets.forEach((ds) => this.datasets.push({id: i++, color: ds.color, value: ds.tags.reduce((name, tag) => { return name + ', ' + tag; })}));
     }
 
-    selectGraph(graph) {
-        //this.graph = graph;
-        this.graph = this.graphs[0];
-        this.createGraph();
+    updateInput(field, value) {
+        if (value == "") {
+            // The "controls" are not yet working properly, using jquery for now...
+            value = this._getFieldById(field).val();
+        } 
+        
+        if (field.substring(0, 11) == 'datasettags') {
+            this.graph.datasets[field.substring(11, field.length)].tags = [];
+            value.split(',').forEach(v => { this.graph.datasets[field.substring(11, field.length)].tags.push(v.trim())});
+        } else if (field.substring(0, 12) == 'datasetcolor') {
+            this.graph.datasets[field.substring(12, field.length)].color = value;            
+        } else {        
+            this.graph[field] = value;
+        }
+            
+        this._setDisplayName(this.graph);                
+    } 
+
+    showGraph() {
+        let that = this;
+        that._getTransactions().then(() => { that._calculateChartData(); });                    
+    }
+    
+    _getTransactions() {
+        let that = this;
+        return that.resourceHandler.list('transactions').then((data) => { that.transactions = (<Array<Transaction>>data); });
     }
 
-    createGraph() {
+    _calculateChartData() {
         let that = this;
         let datasets = [];
 
-        this.graph.datasets.forEach((storedDataset) => {
+        that.graph.datasets.forEach((storedDataset) => {
             var name = storedDataset.tags.reduce((name, tag) => { return name + ', ' + tag; });
             var dataset = { color: storedDataset.color, name: name, values: {} };
 
@@ -110,13 +225,14 @@ export class GraphDisplay {
             function getDateFromTransaction(transaction) { return transaction.transactionDate; };
 
             var dateGrouping;
-            if (that.graph.timeInterval.name == 'Yearly') {
+            if (that.graph.timeInterval == 'Yearly') {
                 dateGrouping = getYearFromTransaction;
-            } if (that.graph.timeInterval.name == 'Monthly') {
+            } if (that.graph.timeInterval == 'Monthly') {
                 dateGrouping = getMonthFromTransaction;
             } else {
                 dateGrouping = getDateFromTransaction;
             }
+            
 
             var transactionGroups = _.groupBy(includedTransactions, dateGrouping);
 
@@ -140,31 +256,35 @@ export class GraphDisplay {
     
         //showGraph(vm.graph, datasets);
          //let data = [new AreaChartItem(new Date(2015, 1, 1), 200.5), new AreaChartItem(new Date(2015, 1, 15), 150.7)];
-        let chart = new AreaChart();
-        let chartItems = new Array<ChartItem>();
+        let chart = new AreaChart();        
+        let nvd3ChartData = []; 
+        
+        for (let dataset of datasets) {
+            let chartItems = []; // new Array<ChartItem>();
+            for (let key in dataset.values) {
+                // Reformat date if date = 'YYMMDD'
+                let date = key;
+                // if (date.length == 6) {
+                //     date = '20' + date.substring(0, 2) + '-' + date.substring(2, 4) + '-' + date.substring(4, 7);
+                // }
+                let val = new Date(date.length == 6 ? '20' + date.substring(0, 2) : date.substring(0, 2), date.substring(2, 4), date.substring(4, 7), 0).valueOf();
+                chartItems.push({x: val, y: dataset.values[key]});
+            }        
+            
+            nvd3ChartData.push({ values: chartItems, key: dataset.name, color: dataset.color});
+        }
 
-        for (let key in datasets[0].values) {
-            // Reformat date if date = 'YYMMDD'
-            let date = key;
-            if (date.length == 6) {
-                date = '20' + date.substring(0, 2) + '-' + date.substring(2, 4) + '-' + date.substring(4, 7);
+        chart.id = 'chart' + Math.floor((1 + Math.random()) * 0x10000);
+        ChartService.getInstance().charts.push(chart);      
+        
+        
+        
+        // VERY ugly solution until I found out how to do this correctly...
+        let intervalId = setInterval(() => {  
+            if (that._getFieldById(chart.id)) {
+                chart.create(nvd3ChartData);    
+                clearInterval(intervalId);
             }
-            chartItems.push(new ChartItem(new Date(date), datasets[0].values[key]));
-        }        
-
-        this.charts.push(chart);
-        chart.createChart(chartItems);        
+        }, 500);                   
     }
-
-    addGraphs(currentGraphs: Array<Object>, newGraphs) {
-        currentGraphs.length = 0;
-        newGraphs.forEach((graph) => {
-            //graph.key = key;
-            graph.nameAndDate = graph.name + ' : ' + graph.dateFrom + ' - ' + graph.dateTo;
-            currentGraphs.push(graph);
-        });
-    };
-
-    showGraph(graph, datasets) {
-    }
-}
+ }
